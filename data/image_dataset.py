@@ -57,7 +57,7 @@ class ImageDataset(data.Dataset, Configurable):
         res = []
         for gt in self.gt_paths:
             lines = []
-            reader = open(gt, 'r').readlines()
+            reader = open(gt, 'r', encoding='UTF-8').readlines()
             for line in reader:
                 item = {}
                 parts = line.strip().split(',')

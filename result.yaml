@@ -1,0 +1,141 @@
+Experiment:
+  class: experiment.Experiment
+  evaluation:
+    class: experiment.ValidationSettings
+    data_loaders:
+      icdar2015:
+        batch_size: 1
+        class: experiment.DataLoader
+        collect_fn:
+          class: data.processes.ICDARCollectFN
+        dataset: &id001
+          class: experiment.ImageDataset
+          data_dir:
+          - ./datasets/icdar2015/
+          data_list:
+          - ./datasets/icdar2015/test_list.txt
+          name: validate_data
+          processes:
+          - augmenter_args:
+            - - Resize
+              - height: 736
+                width: 1280
+            class: data.processes.AugmentDetectionData
+            keep_ratio: false
+            only_resize: true
+          - class: data.processes.MakeICDARData
+          - class: data.processes.MakeSegDetectionData
+          - class: data.processes.NormalizeImage
+        num_workers: 16
+    exempt: 1
+    interval: 4500
+    visualize: false
+  logger:
+    class: experiment.Logger
+    level: info
+    log_interval: 450
+    verbose: true
+  name: Experiment
+  structure:
+    builder:
+      class: experiment.Builder
+      model: SegDetectorModel
+      model_args:
+        backbone: deformable_resnet18
+        decoder: SegDetector
+        decoder_args:
+          adaptive: true
+          in_channels:
+          - 64
+          - 128
+          - 256
+          - 512
+          k: 50
+        loss_class: L1BalanceCELoss
+    class: experiment.Structure
+    measurer:
+      class: experiment.QuadMeasurer
+    representer:
+      class: experiment.SegDetectorRepresenter
+      max_candidates: 1000
+    visualizer:
+      class: experiment.SegDetectorVisualizer
+  train:
+    checkpoint:
+      class: experiment.Checkpoint
+      resume: null
+      start_epoch: 0
+      start_iter: 0
+    class: experiment.TrainSettings
+    data_loader:
+      batch_size: 16
+      class: experiment.DataLoader
+      dataset: &id002
+        class: experiment.ImageDataset
+        data_dir:
+        - ./datasets/icdar2015/
+        data_list:
+        - ./datasets/icdar2015/train_list.txt
+        name: train_data
+        processes:
+        - augmenter_args:
+          - - Fliplr
+            - 0.5
+          - cls: Affine
+            rotate:
+            - -10
+            - 10
+          - - Resize
+            - - 0.5
+              - 3.0
+          class: data.processes.AugmentDetectionData
+          keep_ratio: false
+          only_resize: false
+        - class: data.processes.RandomCropData
+          max_tries: 10
+          size:
+          - 640
+          - 640
+        - class: data.processes.MakeICDARData
+        - class: data.processes.MakeSegDetectionData
+        - class: experiment.MakeBorderMap
+        - class: data.processes.NormalizeImage
+        - class: data.processes.FilterKeys
+          superfluous:
+          - polygons
+          - filename
+          - shape
+          - ignore_tags
+          - is_training
+      num_workers: 16
+    epochs: 1200
+    model_saver:
+      class: experiment.ModelSaver
+      dir_path: model
+      save_interval: 3000
+      signal_path: save
+    scheduler:
+      class: experiment.OptimizerScheduler
+      learning_rate:
+        class: training.learning_rate.DecayLearningRate
+        epochs: 1200
+      optimizer: SGD
+      optimizer_args:
+        lr: 0.007
+        momentum: 0.9
+        weight_decay: 0.0001
+  validation:
+    class: experiment.ValidationSettings
+    data_loaders:
+      icdar2015:
+        batch_size: 1
+        class: experiment.DataLoader
+        collect_fn:
+          class: data.processes.ICDARCollectFN
+        dataset: *id001
+        num_workers: 16
+    exempt: 1
+    interval: 4500
+    visualize: false
+train_data: *id002
+validate_data: *id001

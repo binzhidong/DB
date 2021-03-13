@@ -50,6 +50,7 @@ class Config(object):
             return conf
         elif isinstance(conf, str):
             if conf.startswith('^'):
+
                 return defines[conf[1:]]
             if conf.startswith('$'):
                 return {'class': self.find_class_in_modules(conf[1:], modules)}
@@ -96,6 +97,7 @@ class State:
         self.default = default
 
 
+# 定义元类
 class StateMeta(type):
     def __new__(mcs, name, bases, attrs):
         current_states = []
@@ -107,7 +109,9 @@ class StateMeta(type):
         attrs['states'] = OrderedDict(current_states)
         new_class = super(StateMeta, mcs).__new__(mcs, name, bases, attrs)
 
+        # MRO: Method Resolution Order: 方法解析顺序
         # Walk through the MRO
+        # 访问基类和自己的 states，更新到 new_class的states 中 （逆序的过程）
         states = OrderedDict()
         for base in reversed(new_class.__mro__):
             if hasattr(base, 'states'):
@@ -142,6 +146,7 @@ class Configurable(metaclass=StateMeta):
             if state.autoload:
                 self.load(name, **kwargs)
 
+    # 更具参数 添加 成员
     def load(self, state_name, **kwargs):
         # FIXME: kwargs should be filtered
         # Args passed from command line

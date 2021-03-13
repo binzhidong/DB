@@ -57,6 +57,7 @@ def main():
         torch.distributed.init_process_group(backend='nccl', init_method='env://')
 
     conf = Config()
+    #得到训练参数
     experiment_args = conf.compile(conf.load(args['exp']))['Experiment']
     experiment_args.update(cmd=args)
     experiment = Configurable.construct_class_from_config(experiment_args)
