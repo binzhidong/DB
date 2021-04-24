@@ -74,13 +74,16 @@ class SegDetectorRepresenter(Configurable):
         height, width = bitmap.shape
         boxes = []
         scores = []
-
+        #找到轮廓
         contours, _ = cv2.findContours(
             (bitmap*255).astype(np.uint8),
             cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
+        #处理每个轮廓
         for contour in contours[:self.max_candidates]:
+            #计算轮廓周长
             epsilon = 0.01 * cv2.arcLength(contour, True)
+            #主要功能是把一个连续光滑曲线折线化
             approx = cv2.approxPolyDP(contour, epsilon, True)
             points = approx.reshape((-1, 2))
             if points.shape[0] < 4:
@@ -168,6 +171,7 @@ class SegDetectorRepresenter(Configurable):
         return expanded
 
     def get_mini_boxes(self, contour):
+        #生成最小外接矩形
         bounding_box = cv2.minAreaRect(contour)
         points = sorted(list(cv2.boxPoints(bounding_box)), key=lambda x: x[0])
 
